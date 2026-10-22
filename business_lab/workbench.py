@@ -787,8 +787,8 @@ def render_export_center(b, lang):
     st.subheader(L("Excel & CSV export center", "Центр выгрузки Excel и CSV"))
     st.caption(
         L(
-            "UTF-8 with BOM for Excel. Numeric values remain numeric; undefined results are empty. Text formulas are escaped. Files use stable machine-readable column names, selected currency and source-model metadata.",
-            "UTF-8 с BOM для Excel. Числа остаются числами; неопределённые результаты пустые. Текстовые формулы экранируются. Файлы содержат стабильные машинные названия столбцов, валюту и метаданные исходной модели.",
+            "Excel is a formatted workbook; CSV is a plain data file (UTF-8 with BOM). Both preserve numeric values and source currencies. Undefined results stay blank.",
+            "Excel — оформленная книга, CSV — файл данных (UTF-8 с BOM). Оба формата сохраняют числа и исходную валюту. Неопределённые результаты остаются пустыми.",
         )
     )
     journal = None
@@ -816,7 +816,6 @@ def render_export_center(b, lang):
         selected,
         "text/csv",
         key="download_selected_csv",
-        type="primary",
     )
     provenance = {
         name: {"currency": item["currency"], "source_business": item["business"]} for name, item in extras.items()
@@ -850,10 +849,18 @@ def render_export_center(b, lang):
     )
     st.caption(
         L(
-            "Excel: one sheet per table, filters, frozen headers, numeric formats and source assumptions. A snapshot of current calculations; additional analyses appear after visiting their workspaces.",
-            "Excel: отдельные листы, фильтры, закреплённые заголовки, числовые форматы и исходные допущения. Снимок текущих расчётов; дополнительные анализы появляются после посещения соответствующих разделов.",
+            "Complete workbook: KPI overview, profit chart, table of contents, filters, frozen headers and source assumptions. A snapshot of current calculations; additional analyses appear after visiting their workspaces.",
+            "Полная книга: обзор KPI, график прибыли, содержание, фильтры, закреплённые заголовки и исходные допущения. Снимок текущих расчётов; дополнительные анализы появляются после посещения соответствующих разделов.",
         )
     )
+    st.download_button(
+        L("Download selected table as Excel", "Скачать выбранную таблицу в Excel"),
+        excel_bytes({selected: tables[selected]}, {**manifest, "exported_table": selected}, lang, LABELS),
+        selected.removesuffix(".csv") + ".xlsx",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        key="download_selected_excel",
+    )
+    st.caption(L("Tables in the complete workbook: ", "Таблиц в полной книге: ") + str(len(tables)))
     st.download_button(
         L("Download all CSV tables (ZIP)", "Скачать все таблицы CSV (ZIP)"),
         export_zip(tables, manifest),

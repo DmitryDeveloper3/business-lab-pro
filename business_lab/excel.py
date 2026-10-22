@@ -24,9 +24,14 @@ def excel_bytes(tables, manifest, lang="English", labels=None):
         {"bold": True, "font_color": "#FFFFFF", "bg_color": "#237A83", "text_wrap": True, "valign": "vcenter"}
     )
     text = book.add_format({"font_name": "Calibri", "font_size": 11, "valign": "top", "text_wrap": True})
-    number = book.add_format({"num_format": '#,##0.00;[Red](#,##0.00);"—"', "valign": "top"})
-    integer = book.add_format({"num_format": '#,##0;[Red](#,##0);"—"', "valign": "top"})
-    percent = book.add_format({"num_format": '0.0%;[Red](0.0%);"—"', "valign": "top"})
+    number = book.add_format({"num_format": "#,##0.00;[Red](#,##0.00);0.00", "valign": "top"})
+    integer = book.add_format({"num_format": "#,##0;[Red](#,##0);0", "valign": "top"})
+    percent = book.add_format({"num_format": "0.0%;[Red](0.0%);0.0%", "valign": "top"})
+    link_format = book.add_format({"font_color": "#237A83", "underline": True})
+    profit_label = book.add_format({"bold": True, "bg_color": "#E4F1F1", "font_color": "#143D46", "valign": "top"})
+    profit_number = book.add_format(
+        {"bold": True, "bg_color": "#E4F1F1", "num_format": "#,##0.00;[Red](#,##0.00);0.00", "valign": "top"}
+    )
     negative = book.add_format({"font_color": "#A52E3E", "bg_color": "#FCECEF"})
     names = set()
     tab_labels = {
@@ -36,6 +41,16 @@ def excel_bytes(tables, manifest, lang="English", labels=None):
         "decision_journal": "Журнал решений",
         "marketing_inputs": "Данные маркетинга",
         "marketing_kpis": "KPI маркетинга",
+        "product_economics": "Экономика товаров",
+        "portfolio": "Портфель товаров",
+        "portfolio_summary": "Итоги портфеля",
+        "profit_goal": "Целевая прибыль",
+        "plan_actual": "План и факт",
+        "acquisition_allowance": "Допустимый CAC",
+        "cash_runway": "Денежный резерв",
+        "promotion_viability": "Оценка промоакции",
+        "risk_draws": "Стресс-тест",
+        "risk_assumptions_summary": "Допущения риска",
     }
     fraction_columns = {
         "returns",
@@ -56,7 +71,6 @@ def excel_bytes(tables, manifest, lang="English", labels=None):
         "conversion_rate",
     }
     count_columns = {
-        "orders",
         "units",
         "month",
         "months",
@@ -67,6 +81,7 @@ def excel_bytes(tables, manifest, lang="English", labels=None):
         "new_customers",
         "paid_new",
         "id",
+        "minimum_orders",
     }
 
     def sheet(name, subtitle):
@@ -78,18 +93,21 @@ def excel_bytes(tables, manifest, lang="English", labels=None):
         names.add(unique.casefold())
         ws = book.add_worksheet(unique)
         ws.hide_gridlines(2)
+        ws.set_zoom(90)
         ws.set_tab_color("#237A83")
         ws.merge_range(0, 0, 0, 5, "BUSINESS LAB PRO", title)
         ws.set_row(0, 40)
         ws.merge_range(1, 0, 1, 5, subtitle, note)
         ws.set_row(1, 32)
         ws.set_landscape()
-        ws.fit_to_pages(1, 0)
+        # Keep large detail tables legible on paper rather than shrinking 20 columns to A4.
+        ws.set_print_scale(85)
         ws.set_paper(9)
         ws.set_margins(0.3, 0.3, 0.5, 0.5)
         ws.set_footer("&LBUSINESS LAB PRO&R&P / &N")
         return ws
 
+    overview = None
     scenarios = tables.get("scenarios.csv")
     if (
         scenarios is not None
@@ -100,11 +118,16 @@ def excel_bytes(tables, manifest, lang="English", labels=None):
             "Обзор" if ru else "Overview",
             "Ключевые показатели · снимок расчётов" if ru else "Key metrics · calculation snapshot",
         )
+        overview = ws
+        ws.fit_to_pages(1, 1)
         ws.set_column(0, 0, 42)
         ws.set_column(1, max(5, len(scenarios)), 25)
         ws.write(4, 0, "Показатель" if ru else "Metric", header)
         for col, (_, scenario) in enumerate(scenarios.iterrows(), 1):
-            ws.write_string(4, col, f"{scenario['scenario']} · {scenario['currency']}", header)
+            name = scenario["scenario"]
+            if ru and name == "Current baseline":
+                name = "Текущая база"
+            ws.write_string(4, col, f"{name} · {scenario['currency']}", header)
         ws.set_row(4, 44)
         metrics = [
             "revenue",
@@ -117,9 +140,11 @@ def excel_bytes(tables, manifest, lang="English", labels=None):
             "break_even_revenue",
         ]
         for row, metric in enumerate(metrics, 5):
-            ws.write_string(row, 0, labels[metric][int(ru)], text)
+            ws.write_string(row, 0, labels[metric][int(ru)], profit_label if metric == "operating_profit" else text)
             for col, (_, scenario) in enumerate(scenarios.iterrows(), 1):
                 fmt = percent if metric in fraction_columns else number
+                if metric == "operating_profit":
+                    fmt = profit_number
                 value = scenario.get(metric)
                 if value is None or pd.isna(value):
                     ws.write_blank(row, col, None, fmt)
@@ -141,11 +166,43 @@ def excel_bytes(tables, manifest, lang="English", labels=None):
         )
         ws.set_row(15, 48)
         ws.freeze_panes(5, 1)
-        ws.print_area(0, 0, 15, max(5, len(scenarios)))
+        # Compare only like currencies; never plot mixed currency values on one numeric axis.
+        baseline_currency = scenarios.iloc[0]["currency"]
+        comparable = [
+            (i, row)
+            for i, (_, row) in enumerate(scenarios.iterrows())
+            if row["currency"] == baseline_currency and pd.notna(row.get("operating_profit"))
+        ]
+        if comparable:
+            chart = book.add_chart({"type": "column"})
+            for i, scenario in comparable:
+                chart.add_series(
+                    {
+                        "name": [ws.name, 4, i + 1],
+                        "categories": [ws.name, 8, 0, 8, 0],
+                        "values": [ws.name, 8, i + 1, 8, i + 1],
+                        "fill": {"color": "#237A83" if i == 0 else "#87B8AE"},
+                        "border": {"none": True},
+                        "data_labels": {"value": True, "num_format": "#,##0.00"},
+                    }
+                )
+            chart.set_title({"name": ("Операционная прибыль · " if ru else "Operating profit · ") + baseline_currency})
+            chart.set_y_axis(
+                {"num_format": "#,##0", "major_gridlines": {"visible": True, "line": {"color": "#E5EEEE"}}}
+            )
+            chart.set_legend({"position": "bottom"})
+            chart.set_chartarea({"border": {"none": True}})
+            chart.set_size({"width": 750, "height": 320})
+            ws.insert_chart(18, 0, chart)
+        ws.print_area(0, 0, 36 + len(tables), max(5, len(scenarios)))
+    sheet_links = []
     for name, frame in tables.items():
         key = name.removesuffix(".csv")
         caption = tab_labels.get(key, key.replace("_", " ").title()) if ru else key.replace("_", " ").title()
         ws = sheet(caption, caption + (" · Снимок данных модели" if ru else " · Model data snapshot"))
+        sheet_links.append((ws.name, len(frame)))
+        if overview is not None:
+            ws.write_url(3, 0, f"internal:'{overview.name}'!A1", link_format, "← Обзор" if ru else "← Overview")
         ws.merge_range(
             2,
             0,
@@ -172,7 +229,11 @@ def excel_bytes(tables, manifest, lang="English", labels=None):
                 display += f" ({col + 1})"
             used_headers.add(display.casefold())
             fmt = percent if key_col in fraction_columns else integer if key_col in count_columns else number
-            if not pd.api.types.is_numeric_dtype(frame[column].dtype):
+            # Missing values can force an otherwise numeric column to object dtype.
+            present = frame[column].dropna()
+            if not pd.api.types.is_numeric_dtype(frame[column].dtype) and not (
+                len(present) and present.map(lambda v: isinstance(v, Real) and not isinstance(v, bool)).all()
+            ):
                 fmt = text
             columns.append({"header": display, "header_format": header, "format": fmt})
             width = min(
@@ -197,6 +258,8 @@ def excel_bytes(tables, manifest, lang="English", labels=None):
                         ws.write_number(row_index, col, value, fmt)
                 else:
                     value = str(value)
+                    if ru and str(column) == "scenario" and value == "Current baseline":
+                        value = "Текущая база"
                     ws.write_string(row_index, col, value, fmt)
                     height = max(height, min(120, 16 * (1 + len(value) // 28 + value.count("\n"))))
             ws.set_row(row_index, height)
@@ -208,9 +271,15 @@ def excel_bytes(tables, manifest, lang="English", labels=None):
                 ws.conditional_format(
                     5, col, 4 + len(frame), col, {"type": "cell", "criteria": "<", "value": 0, "format": negative}
                 )
+    if overview is not None:
+        overview.write(35, 0, "Содержание книги" if ru else "Workbook contents", header)
+        for row, (name, count) in enumerate(sheet_links, 36):
+            overview.write_url(row, 0, "internal:'" + name.replace("'", "''") + "'!A1", link_format, name)
+            overview.write(row, 1, f"{count:,} " + ("строк" if ru else "rows"), note)
     ws = sheet("Методология" if ru else "Methodology", "Сведения об экспорте" if ru else "Export information")
     ws.set_column(0, 0, 30)
     ws.set_column(1, 5, 24)
+    ws.fit_to_pages(1, 0)
     ws.merge_range(
         3,
         0,
@@ -222,16 +291,39 @@ def excel_bytes(tables, manifest, lang="English", labels=None):
         note,
     )
     ws.set_row(3, 48)
+    if overview is not None:
+        ws.write_url(2, 0, f"internal:'{overview.name}'!A1", link_format, "← Обзор" if ru else "← Overview")
+    ws.write_row(4, 0, ["Параметр" if ru else "Parameter", "Значение" if ru else "Value"], header)
+
+    # One value per row keeps long per-analysis source models readable and searchable.
+    def leaves(value, path=""):
+        if isinstance(value, dict) and value:
+            for key, item in value.items():
+                yield from leaves(item, f"{path}.{key}" if path else str(key))
+        else:
+            yield path, value
+
     row = 5
-    for key, value in manifest.items():
-        ws.write_string(row, 0, str(key), header)
-        serialized = json.dumps(value, ensure_ascii=False, indent=2) if isinstance(value, (dict, list)) else str(value)
-        # Keep each source model readable; avoid silently truncating Excel's cell text limit.
-        for chunk_start in range(0, max(1, len(serialized)), 30000):
-            chunk = serialized[chunk_start : chunk_start + 30000]
+    for path, value in leaves(manifest):
+        ws.write_string(row, 0, path, text)
+        if isinstance(value, Real) and not isinstance(value, bool) and math.isfinite(value):
+            ws.merge_range(row, 1, row, 5, value, number)
+            ws.set_row(row, max(24, 14 * math.ceil(len(path) / 28)))
+            row += 1
+            continue
+        serialized = json.dumps(value, ensure_ascii=False) if isinstance(value, (dict, list)) else str(value)
+        for start in range(0, max(1, len(serialized)), 1800):
+            chunk = serialized[start : start + 1800]
             ws.merge_range(row, 1, row, 5, chunk, text)
-            ws.set_row(row, min(409, max(30, 14 * (chunk.count("\n") + 1))))
+            ws.set_row(
+                row,
+                min(
+                    409, max(30, 14 * (math.ceil(len(chunk) / 100) + chunk.count("\n")), 14 * math.ceil(len(path) / 28))
+                ),
+            )
             row += 1
     ws.freeze_panes(5, 1)
+    ws.repeat_rows(4, 4)
+    ws.print_area(0, 0, max(5, row - 1), 5)
     book.close()
     return output.getvalue()

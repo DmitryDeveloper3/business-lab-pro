@@ -20,7 +20,11 @@ def css(mode):
 [data-testid="stApp"] h1,[data-testid="stApp"] h2,[data-testid="stApp"] h3,
 [data-testid="stApp"] [role="tab"], [data-testid="stApp"] label,[data-testid="stApp"] p,[data-testid="stApp"] summary,
 [data-testid="stMetricLabel"],[data-testid="stMetricValue"], [data-testid="stWidgetLabel"] {{color:{p["text"]};}}
+[data-testid="stCaptionContainer"] {{opacity:1;}}
 [data-testid="stCaptionContainer"] p {{color:{p["muted"]};}}
+[data-testid="stBaseButton-primary"] {{background:{p["accent"]};border-color:{p["accent"]};color:{p["background"]};}}
+[data-testid="stBaseButton-primary"] p {{color:{p["background"]};}}
+[data-testid="stApp"] button:focus-visible,[data-testid="stApp"] a:focus-visible {{outline:2px solid {p["accent"]};outline-offset:3px;}}
 [data-testid="stMetric"], [data-testid="stForm"], [data-testid="stExpander"] {{border-color:{p["border"]};}}
 [data-testid="stApp"] input, [data-testid="stApp"] textarea,
 [data-testid="stApp"] [role="combobox"], [data-baseweb="select"]>div,
