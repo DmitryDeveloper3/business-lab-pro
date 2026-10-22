@@ -26,4 +26,6 @@ The Streamlit sign-in screen requires the account holder to accept its Terms of 
 
 ## Excel export
 
-Reports & Export includes a formatted XLSX snapshot with an overview, separate native tables, filters, frozen headers, percentage formats and per-analysis provenance. XlsxWriter is a pinned runtime dependency. User text is never evaluated as formulas. 99 local tests passed after this addition; the downloaded public workbook was checked as a valid XLSX archive.
+Reports & Export includes a formatted XLSX snapshot with an overview, separate native tables, filters, frozen headers, percentage formats and per-analysis provenance. XlsxWriter is a pinned runtime dependency. User text is never evaluated as formulas. 101 local tests passed after the final review; the downloaded public workbook was checked as a valid XLSX archive.
+
+The final polish adds selected-table XLSX, a same-currency profit chart, linked workbook contents, explicit zeros, decimal forecast orders and improved dark-theme contrast. See QA.md for verification scope.

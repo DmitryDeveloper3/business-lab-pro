@@ -4,7 +4,7 @@
 
 - macOS Apple Silicon, Python 3.14.8, isolated `.venv`.
 - Installed Streamlit 1.66.1, pandas 3.0.6, NumPy 2.5.4, Plotly 7.1.0, pytest 9.1.1 and Ruff 0.17.1. Exact complete installation is pinned in `requirements.txt`.
-- **97 pytest tests pass**, including original financial/marketing checks and advanced workbench models. All thirteen pages are executed through AppTest in English and Russian; the six relevant advanced/export pages also run in light and dark appearance. Tests cover changing financial inputs, saving decisions, loading all four cases, persistent SQLite saves and restoring advanced inputs into widgets.
+- **101 pytest tests pass**, including original financial/marketing checks and advanced workbench models. All thirteen pages are executed through AppTest in English and Russian; the six relevant advanced/export pages also run in light and dark appearance. Tests cover changing financial inputs, saving decisions, loading all four cases, persistent SQLite saves and restoring advanced inputs into widgets.
 - Ruff lint, Ruff formatting check and `pip check` pass.
 - Standard `python -m streamlit run streamlit_app.py` server started successfully on loopback port 8501. The app was loaded and exercised through an actual browser.
 - Browser CSV upload: `examples/marketing.csv` loaded two channel rows for 2026-10, showed KPI calculations and channel screening.
@@ -20,7 +20,7 @@
 
 ## Remaining verification limits
 
-- GitHub Actions on Linux/Python 3.14 passed for published commit 4566f19cee556589036a2fed0711ee39369530e1. Streamlit Community Cloud and other Python minor versions have not yet been verified.
+- GitHub Actions on Linux/Python 3.14 passed for published commit 4566f19cee556589036a2fed0711ee39369530e1. Streamlit Community Cloud was subsequently verified with Python 3.14.8 (see final review below). Other Python minor versions remain unverified.
 - No load/stress, accessibility audit, penetration test or multi-browser/mobile-device matrix was performed. Narrow viewport checks are not equivalent to testing real mobile hardware.
 - HTML generation and download are verified; physical printing/page breaks across browsers and automatic PDF export are not verified. No automatic PDF feature is offered.
 - Finder double-click handling of `Launch.command` can depend on macOS terminal/file association settings; the underlying standard Streamlit command was verified.
@@ -66,4 +66,15 @@ Added `cloud_app.py` as the Community Cloud entrypoint. It enables visitor-sessi
 
 The complete source is public at https://github.com/DmitryDeveloper3/business-lab-pro . Because the GitHub integration denied writes and local Git had no saved authentication, the audited files were uploaded through the already authenticated GitHub web interface. A public Git fetch verified byte-for-byte content equality with the locally tested files; only `Launch.command` lost its executable bit through web upload, so the README documents `zsh Launch.command` / `chmod +x`.
 
-GitHub Actions run https://github.com/DmitryDeveloper3/business-lab-pro/actions/runs/39755510198 completed successfully on Linux with Python 3.14: dependency installation, `pip check`, Ruff lint/format and pytest all passed. Website deployment remains pending the account holder's Streamlit sign-in and acceptance of service terms. A source repository URL is not claimed as a live application URL.
+GitHub Actions run https://github.com/DmitryDeveloper3/business-lab-pro/actions/runs/39755510198 completed successfully on Linux with Python 3.14: dependency installation, `pip check`, Ruff lint/format and pytest all passed. The website was subsequently deployed and verified at https://cloudapppy-olp4fpzzp6rp6t8ty6uacf.streamlit.app/ .
+
+## Final review — 2026-10-22
+
+- 101 tests passed after the final changes; Ruff lint/format and pip dependency checks passed. Financial engine code was unchanged.
+- All thirteen workspaces were exercised in a real browser at the 1366×900 laptop breakpoint. Automated page coverage includes both languages. Russian dark-theme export was also inspected at 390×844. Temporary viewport overrides were reset.
+- Dark-theme captions previously inherited 60% opacity; captions now use the explicit readable palette. Primary download buttons use contrasting text, and keyboard focus has a visible outline.
+- XLSX now includes a native profit chart restricted to the baseline currency, localized sheet names and baseline label, linked contents and return links, an emphasized operating-profit row, and readable parameter-by-parameter provenance. The overview fits one printed page. Detail tables retain legible scale rather than squeezing every column onto a page.
+- Zero values stay explicit, undefined results stay blank and fractional forecast orders retain decimal formatting. Numeric values, per-row currencies and formula-safe user text are preserved.
+- Both the complete workbook and a selected-table workbook are offered. The local browser downloaded the complete export after visiting every workspace: 17 worksheets, 15 native tables, a profit chart and intact ZIP structure; baseline revenue was 107160.
+- The downloaded workbook was opened by LibreOffice for PDF rendering; the overview/chart/contents and provenance pages were visually inspected. Large stress-test detail tables can generate many printed pages. Native Microsoft Excel itself was not automated.
+- Public-source parity and the deployed export controls are checked after publishing. No claim of load testing or durable account-based cloud storage is made.
