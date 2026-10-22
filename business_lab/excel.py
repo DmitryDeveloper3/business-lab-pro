@@ -8,12 +8,13 @@ import re
 
 import pandas as pd
 import xlsxwriter
+from .i18n import TEXT
 
 
 def excel_bytes(tables, manifest, lang="English", labels=None):
     """Preserve table values and provenance; never interpret user strings as formulas."""
     ru = lang == "Русский"
-    labels = labels or {}
+    labels = {**TEXT, "scenario": ("Scenario", "Сценарий"), **(labels or {})}
     output = BytesIO()
     book = xlsxwriter.Workbook(output, {"in_memory": True, "strings_to_formulas": False, "strings_to_urls": False})
     book.set_properties({"title": "BUSINESS LAB PRO", "comments": "Model snapshot; not audited actuals."})
@@ -44,6 +45,10 @@ def excel_bytes(tables, manifest, lang="English", labels=None):
         "ctr",
         "margin",
         "contribution_margin",
+        "profit_margin",
+        "revenue_variance_rate",
+        "visitor_to_lead",
+        "lead_to_customer",
         "operating_margin",
         "gross_margin",
         "repeat_rate",
@@ -85,6 +90,58 @@ def excel_bytes(tables, manifest, lang="English", labels=None):
         ws.set_footer("&LBUSINESS LAB PRO&R&P / &N")
         return ws
 
+    scenarios = tables.get("scenarios.csv")
+    if (
+        scenarios is not None
+        and not scenarios.empty
+        and {"scenario", "currency", "revenue"}.issubset(scenarios.columns)
+    ):
+        ws = sheet(
+            "Обзор" if ru else "Overview",
+            "Ключевые показатели · снимок расчётов" if ru else "Key metrics · calculation snapshot",
+        )
+        ws.set_column(0, 0, 42)
+        ws.set_column(1, max(5, len(scenarios)), 25)
+        ws.write(4, 0, "Показатель" if ru else "Metric", header)
+        for col, (_, scenario) in enumerate(scenarios.iterrows(), 1):
+            ws.write_string(4, col, f"{scenario['scenario']} · {scenario['currency']}", header)
+        ws.set_row(4, 44)
+        metrics = [
+            "revenue",
+            "gross_profit",
+            "contribution_profit",
+            "operating_profit",
+            "contribution_margin",
+            "profit_margin",
+            "marketing_spend",
+            "break_even_revenue",
+        ]
+        for row, metric in enumerate(metrics, 5):
+            ws.write_string(row, 0, labels[metric][int(ru)], text)
+            for col, (_, scenario) in enumerate(scenarios.iterrows(), 1):
+                fmt = percent if metric in fraction_columns else number
+                value = scenario.get(metric)
+                if value is None or pd.isna(value):
+                    ws.write_blank(row, col, None, fmt)
+                else:
+                    ws.write_number(row, col, value, fmt)
+            ws.set_row(row, 30)
+        ws.conditional_format(
+            5, 1, 12, len(scenarios), {"type": "cell", "criteria": "<", "value": 0, "format": negative}
+        )
+        ws.merge_range(
+            15,
+            0,
+            15,
+            5,
+            "Источник: текущая модель и сохранённые сценарии. Валюта каждого сценария сохранена; курсы не применяются. Расчёты не являются подтверждёнными фактическими данными."
+            if ru
+            else "Source: current model and saved scenarios. Each scenario retains its currency; no FX conversion. Calculated values are not audited actuals.",
+            note,
+        )
+        ws.set_row(15, 48)
+        ws.freeze_panes(5, 1)
+        ws.print_area(0, 0, 15, max(5, len(scenarios)))
     for name, frame in tables.items():
         key = name.removesuffix(".csv")
         caption = tab_labels.get(key, key.replace("_", " ").title()) if ru else key.replace("_", " ").title()
