@@ -20,7 +20,7 @@ The Streamlit sign-in screen requires the account holder to accept its Terms of 
 
 - Complete source and examples published on GitHub.
 - Linux/Python 3.14 CI passed: https://github.com/DmitryDeveloper3/business-lab-pro/actions/runs/39755510198 .
-- Public app verified running on 2026-10-22: https://cloudapppy-olp4fpzzp6rp6t8ty6uacf.streamlit.app/
+- Public app verified running on 2026-10-22: https://business-lab-pro.streamlit.app/
 - Community Cloud build completed with Python 3.14.8. Russian interface, RUB selection, dark theme and the CSV export screen were verified in the live app.
 - The host automatically replaced pyarrow 26.0.0 with 24.0.0 during provisioning as a platform compatibility safeguard.
 

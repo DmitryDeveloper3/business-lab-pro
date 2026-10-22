@@ -66,7 +66,7 @@ Added `cloud_app.py` as the Community Cloud entrypoint. It enables visitor-sessi
 
 The complete source is public at https://github.com/DmitryDeveloper3/business-lab-pro . Because the GitHub integration denied writes and local Git had no saved authentication, the audited files were uploaded through the already authenticated GitHub web interface. A public Git fetch verified byte-for-byte content equality with the locally tested files; only `Launch.command` lost its executable bit through web upload, so the README documents `zsh Launch.command` / `chmod +x`.
 
-GitHub Actions run https://github.com/DmitryDeveloper3/business-lab-pro/actions/runs/39755510198 completed successfully on Linux with Python 3.14: dependency installation, `pip check`, Ruff lint/format and pytest all passed. The website was subsequently deployed and verified at https://cloudapppy-olp4fpzzp6rp6t8ty6uacf.streamlit.app/ .
+GitHub Actions run https://github.com/DmitryDeveloper3/business-lab-pro/actions/runs/39755510198 completed successfully on Linux with Python 3.14: dependency installation, `pip check`, Ruff lint/format and pytest all passed. The website was subsequently deployed and verified at https://business-lab-pro.streamlit.app/ .
 
 ## Final review — 2026-10-22
 
