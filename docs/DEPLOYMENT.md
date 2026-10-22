@@ -20,5 +20,10 @@ The Streamlit sign-in screen requires the account holder to accept its Terms of 
 
 - Complete source and examples published on GitHub.
 - Linux/Python 3.14 CI passed: https://github.com/DmitryDeveloper3/business-lab-pro/actions/runs/39755510198 .
-- Community Cloud deployment is pending account-holder sign-in and acceptance of Streamlit service terms.
-- No live app URL has been verified yet.
+- Public app verified running on 2026-10-22: https://cloudapppy-olp4fpzzp6rp6t8ty6uacf.streamlit.app/
+- Community Cloud build completed with Python 3.14.8. Russian interface, RUB selection, dark theme and the CSV export screen were verified in the live app.
+- The host automatically replaced pyarrow 26.0.0 with 24.0.0 during provisioning as a platform compatibility safeguard.
+
+## Excel export
+
+Reports & Export includes a formatted XLSX snapshot with an overview, separate native tables, filters, frozen headers, percentage formats and per-analysis provenance. XlsxWriter is a pinned runtime dependency. User text is never evaluated as formulas. 99 local tests passed after this addition; the downloaded public workbook was checked as a valid XLSX archive.
