@@ -9,14 +9,15 @@ A local-first Python/Streamlit application for answering: *How would this decisi
 Python **3.14** was verified on macOS (Apple Silicon). Use the same minor version for the pinned dependency set.
 
 ```bash
-cd Python/BUSINESS_LAB_PRO
+git clone https://github.com/DmitryDeveloper3/business-lab-pro.git
+cd business-lab-pro
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
 python -m streamlit run streamlit_app.py
 ```
 
-Open the local URL printed by Streamlit. For a loopback-only server add `--server.address 127.0.0.1`. From Finder on macOS, `Launch.command` starts the existing project environment. First install the dependencies above.
+Open the local URL printed by Streamlit. For a loopback-only server add `--server.address 127.0.0.1`. On macOS, `zsh Launch.command` starts the existing project environment; run `chmod +x Launch.command` first if you prefer launching it from Finder. First install the dependencies above.
 
 ## What works
 
@@ -149,7 +150,7 @@ python -m pip check
 python scripts/build_examples.py
 ```
 
-Tests include hand-computed finance, reconciliation, margin/loss edge cases, zero denominators, funnel validation, acquisition saturation, elasticity, forecasts, malformed JSON/CSV, self-contained HTML and actual Streamlit AppTest interactions in both languages. CI is configured in `.github/workflows/qa.yml`; it has not been run on GitHub until you push the project.
+Tests include hand-computed finance, reconciliation, margin/loss edge cases, zero denominators, funnel validation, acquisition saturation, elasticity, forecasts, malformed JSON/CSV, self-contained HTML and actual Streamlit AppTest interactions in both languages. CI is configured in `.github/workflows/qa.yml`; the published project passed the [Linux/Python 3.14 QA run](https://github.com/DmitryDeveloper3/business-lab-pro/actions/runs/39755510198).
 
 See [`docs/QA.md`](docs/QA.md) for verified checks and remaining gaps, [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for implementation decisions and [`README_RU.md`](README_RU.md) for a Russian quick start.
 
@@ -158,7 +159,7 @@ See [`docs/QA.md`](docs/QA.md) for verified checks and remaining gaps, [`docs/AR
 Source repository: [DmitryDeveloper3/business-lab-pro](https://github.com/DmitryDeveloper3/business-lab-pro). Hosting uses Streamlit Community Cloud; see [deployment coordinates](docs/DEPLOYMENT.md).
 
 1. Review the files and synthetic example reports. Keep `.venv`, cache folders and `.streamlit/secrets.toml` ignored.
-2. Create your own GitHub repository and commit/push this **project folder** after review. Do not upload other portfolio projects.
+2. Use the published repository above, or fork it into your own account. Keep the application files at repository root.
 3. In Streamlit Community Cloud, select that repository, your chosen branch and `cloud_app.py` as the entrypoint. If the repo contains the parent folders, use `Python/BUSINESS_LAB_PRO/cloud_app.py` and ensure the dependency/config discovery follows that layout; a dedicated root repo is recommended.
 4. Select Python 3.14, matching this verified lock. If unavailable, validate another Python version and regenerate its lock rather than assuming compatibility.
 5. No secrets are required. Check both languages, data import/export and scenario calculations in the deployed environment before sharing the URL.
