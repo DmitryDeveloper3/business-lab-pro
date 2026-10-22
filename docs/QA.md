@@ -20,7 +20,7 @@
 
 ## Remaining verification limits
 
-- Streamlit Community Cloud, GitHub Actions, Linux and other Python minor versions have not been run. Deployment instructions and CI configuration are prepared, not verified deployments.
+- GitHub Actions on Linux/Python 3.14 passed for published commit 4566f19cee556589036a2fed0711ee39369530e1. Streamlit Community Cloud and other Python minor versions have not yet been verified.
 - No load/stress, accessibility audit, penetration test or multi-browser/mobile-device matrix was performed. Narrow viewport checks are not equivalent to testing real mobile hardware.
 - HTML generation and download are verified; physical printing/page breaks across browsers and automatic PDF export are not verified. No automatic PDF feature is offered.
 - Finder double-click handling of `Launch.command` can depend on macOS terminal/file association settings; the underlying standard Streamlit command was verified.
@@ -61,3 +61,9 @@ Remaining limits: the complete ZIP was checked programmatically, while the indiv
 ## Public deployment preparation
 
 Added `cloud_app.py` as the Community Cloud entrypoint. It enables visitor-session-specific workspace storage without changing the local workflow. Six additional tests verify cross-session isolation, invalid namespace rejection and actual AppTest execution/save/export through the cloud entrypoint. All 97 tests pass locally. Runtime/CI verification on the public host is separate; no successful website deployment is claimed from these local checks alone.
+
+## GitHub publication verification
+
+The complete source is public at https://github.com/DmitryDeveloper3/business-lab-pro . Because the GitHub integration denied writes and local Git had no saved authentication, the audited files were uploaded through the already authenticated GitHub web interface. A public Git fetch verified byte-for-byte content equality with the locally tested files; only `Launch.command` lost its executable bit through web upload, so the README documents `zsh Launch.command` / `chmod +x`.
+
+GitHub Actions run https://github.com/DmitryDeveloper3/business-lab-pro/actions/runs/39755510198 completed successfully on Linux with Python 3.14: dependency installation, `pip check`, Ruff lint/format and pytest all passed. Website deployment remains pending the account holder's Streamlit sign-in and acceptance of service terms. A source repository URL is not claimed as a live application URL.
