@@ -24,6 +24,7 @@ from .analytics import (
 )
 from .engine import forecast, marketing
 from .exports import csv_bytes, bundle_tables, export_zip
+from .excel import excel_bytes
 from .workspace import WorkspaceStore, capture, restore, parse_backup
 
 
@@ -783,7 +784,7 @@ def render_export_center(b, lang):
     def L(en, rus):
         return rus if ru else en
 
-    st.subheader(L("CSV export center", "Центр выгрузки CSV"))
+    st.subheader(L("Excel & CSV export center", "Центр выгрузки Excel и CSV"))
     st.caption(
         L(
             "UTF-8 with BOM for Excel. Numeric values remain numeric; undefined results are empty. Text formulas are escaped. Files use stable machine-readable column names, selected currency and source-model metadata.",
@@ -838,6 +839,20 @@ def render_export_center(b, lang):
         ),
         assumptions=st.session_state.get("assumptions", {}),
         notes="Model outputs, not audited actuals. Cash is separate. Saved scenario currencies are preserved. CSV headers are stable technical identifiers.",
+    )
+    st.download_button(
+        L("Download formatted Excel (.xlsx)", "Скачать оформленный Excel (.xlsx)"),
+        excel_bytes(tables, manifest, lang, LABELS),
+        "business_lab_report.xlsx",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        key="download_excel_bundle",
+        type="primary",
+    )
+    st.caption(
+        L(
+            "Excel: one sheet per table, filters, frozen headers, numeric formats and source assumptions. A snapshot of current calculations; additional analyses appear after visiting their workspaces.",
+            "Excel: отдельные листы, фильтры, закреплённые заголовки, числовые форматы и исходные допущения. Снимок текущих расчётов; дополнительные анализы появляются после посещения соответствующих разделов.",
+        )
     )
     st.download_button(
         L("Download all CSV tables (ZIP)", "Скачать все таблицы CSV (ZIP)"),
