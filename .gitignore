@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.DS_Store
+.streamlit/secrets.toml
+*.log
+
+.local/
+
+# Reproducible offline reports embed several MB of Plotly JS; generate with scripts/build_examples.py.
+examples/report_*.html
