@@ -42,3 +42,43 @@ def test_excel_real_bundle_and_empty_duplicate_sheet_names():
         assert len({n.casefold() for n in names}) == len(names)
         assert all(len(n) <= 31 for n in names)
         assert z.testzip() is None
+
+
+def test_overview_chart_excludes_foreign_currency_and_preserves_source_values():
+    tables = bundle_tables(Business(), {"USD decision": Business(price=135), "EUR decision": Business(currency="EUR")})
+    with ZipFile(BytesIO(excel_bytes(tables, {"business": Business().dict()}, "Русский"))) as z:
+        sheet = ET.fromstring(z.read("xl/worksheets/sheet1.xml"))
+        assert sheet.find(".//s:c[@r='B6']/s:v", NS).text == "107160"
+        assert sheet.find(".//s:c[@r='B9']/s:v", NS).text == "24001"
+        chart = ET.fromstring(z.read("xl/charts/chart1.xml"))
+        chart_ns = {"c": "http://schemas.openxmlformats.org/drawingml/2006/chart"}
+        series = chart.findall(".//c:ser", chart_ns)
+        assert len(series) == 2
+        assert "EUR decision" not in z.read("xl/charts/chart1.xml").decode()
+        assert sheet.find(".//s:hyperlinks", NS) is not None
+
+
+def test_zero_fractional_orders_and_metadata_remain_readable():
+    tables = {
+        "forecast.csv": pd.DataFrame({"orders": [12.75, 0.0], "profit_margin": [0.25, 0.0], "profit": [None, -50.0]})
+    }
+    long_note = "Длинное пояснение " * 200
+    with ZipFile(BytesIO(excel_bytes(tables, {"analysis": {"source": {"price": 120.25}}, "notes": long_note}))) as z:
+        sheet = ET.fromstring(z.read("xl/worksheets/sheet1.xml"))
+        assert sheet.find(".//s:c[@r='A6']/s:v", NS).text == "12.75"
+        assert sheet.find(".//s:c[@r='A7']/s:v", NS).text == "0"
+        styles = ET.fromstring(z.read("xl/styles.xml"))
+        formats = {n.get("numFmtId"): n.get("formatCode") for n in styles.findall("s:numFmts/s:numFmt", NS)}
+        style = list(styles.find("s:cellXfs", NS))[int(sheet.find(".//s:c[@r='A6']", NS).get("s"))]
+        assert ".00" in formats[style.get("numFmtId")]
+        assert "—" not in z.read("xl/styles.xml").decode()
+        strings = ET.fromstring(z.read("xl/sharedStrings.xml"))
+        values = ["".join(si.itertext()) for si in strings]
+        assert "analysis.source.price" in values
+        metadata = ET.fromstring(z.read("xl/worksheets/sheet2.xml"))
+        chunks = [
+            values[int(cell.find("s:v", NS).text)]
+            for cell in metadata.findall(".//s:c", NS)
+            if cell.get("r").startswith("B") and cell.get("t") == "s" and int(cell.get("r")[1:]) >= 7
+        ]
+        assert long_note == "".join(chunks)
