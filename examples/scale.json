@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "business": {
+    "price": 120.0,
+    "unit_cost": 42.0,
+    "variable_cost": 8.0,
+    "orders": 1000.0,
+    "returns": 0.06,
+    "discount": 0.05,
+    "payment_rate": 0.025,
+    "ad_spend": 22000,
+    "fixed_cost": 19000,
+    "other_income": 0.0,
+    "currency": "USD",
+    "period": "month"
+  }
+}

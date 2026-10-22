@@ -1,0 +1,4 @@
+﻿sku,price,unit_cost,variable_cost,orders,returns,discount,payment_rate
+Core,120.0,42.0,8.0,600.0,0.06,0.05,0.025
+Premium,168.0,50.4,8.0,250.0,0.06,0.05,0.025
+Entry,78.0,33.6,8.0,150.0,0.06,0.05,0.025
